@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Collections;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
@@ -7,7 +8,8 @@ public class TileManager : MonoBehaviour
 {
     public static TileManager Instance { get; private set; }
     public Button ShuffleButton, SolveButton;
-    public Text ErrorText;
+    public Text StatusText;
+    public Text[] MartaStatusTexts;
     public Tile[] Tiles;
     public static System.Random R = new System.Random();
     void Awake()
@@ -17,7 +19,7 @@ public class TileManager : MonoBehaviour
         {
             Tiles[i].Index = i;
         }
-        ErrorText.gameObject.SetActive(false);
+        StatusText.gameObject.SetActive(false);
     }
 
     void OnDestroy()
@@ -27,7 +29,7 @@ public class TileManager : MonoBehaviour
 
     public void ShuffleTiles()
     {
-        ErrorText.gameObject.SetActive(false);
+        StatusText.gameObject.SetActive(false);
         var array = Enumerable.Range(0, 9).OrderBy(t => R.Next()).ToArray();
         for (int i = 0; i < array.Length; i++)
         {
@@ -39,15 +41,69 @@ public class TileManager : MonoBehaviour
     {
         ShuffleButton.interactable = false;
         SolveButton.interactable = false;
-        ErrorText.gameObject.SetActive(true);
+        StatusText.gameObject.SetActive(true);
         var startNode = GetNodeFromTiles();
         SetTilesFromNode(startNode);
         var goalNode = new Node
         {
             Tiles = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 0 }
         };
-        StartCoroutine(Algorithms.AStar.PathFinder.Execute(startNode, goalNode, ErrorText, SetFinalResult));
+        StartCoroutine(Algorithms.AStar.PathFinder.Execute(startNode, goalNode, StatusText, SetFinalResult));
 
+    }
+
+    public void SolvePuzzleWithRtaStar()
+    {
+        ShuffleButton.interactable = false;
+        SolveButton.interactable = false;
+        StatusText.gameObject.SetActive(true);
+        var startNode = GetNodeFromTiles();
+        SetTilesFromNode(startNode);
+        var goalNode = new Node
+        {
+            Tiles = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 0 }
+        };
+        Algorithms.RTAStar.PathFinder finder = new Algorithms.RTAStar.PathFinder();
+        StartCoroutine(finder.Execute(startNode, goalNode, 5,
+            SetFinalResult, SetTilesFromNode, s => StatusText.text = s));
+
+    }
+
+    private int latestRoutine = 0;
+    public void SolvePuzzleWithMarta()
+    {
+        ShuffleButton.interactable = false;
+        SolveButton.interactable = false;
+        StatusText.gameObject.SetActive(true);
+        var startNode = GetNodeFromTiles();
+        SetTilesFromNode(startNode);
+        var goalNode = new Node
+        {
+            Tiles = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 0 }
+        };
+        Agent[] agents = new Agent[3];
+        for (int i = 0; i < 3; i++)
+        {
+            agents[i] = new Agent();
+        }
+        List<IEnumerator> agentRoutines = new List<IEnumerator>();
+        for (var index = 0; index < agents.Length; ++index)
+        {
+            int i = index;
+            Agent agent = agents[index];
+            Debug.Log(MartaStatusTexts[index].text);
+            var routine = agent.AgentStep(startNode, goalNode, 5, result =>
+            {
+                SetFinalResult(result);
+                foreach (var agentRoutine in agentRoutines)
+                {
+                    StopCoroutine(agentRoutine);
+                }
+                agentRoutines.Clear();
+            }, SetTilesFromNode, s => MartaStatusTexts[i].text = s);
+            agentRoutines.Add(routine);
+        }
+        StartCoroutine(agentRoutines[latestRoutine]);
     }
 
     private void SetFinalResult(Node result)
@@ -56,31 +112,15 @@ public class TileManager : MonoBehaviour
         SolveButton.interactable = true;
         if (result == null)
         {
-            ErrorText.gameObject.SetActive(true);
-            ErrorText.text = "No Solution";
+            StatusText.gameObject.SetActive(true);
+            StatusText.text = "No Solution";
         }
         else
         {
-            //ErrorText.gameObject.SetActive(false);
+            //StatusText.gameObject.SetActive(false);
             SetTilesFromNode(result);
-            ErrorText.text = "Finished " + ErrorText.text;
+            StatusText.text = "Finished " + StatusText.text;
         }
-    }
-
-    public void SolvePuzzleWithRtaStar()
-    {
-        ShuffleButton.interactable = false;
-        SolveButton.interactable = false;
-        ErrorText.gameObject.SetActive(true);
-        var startNode = GetNodeFromTiles();
-        SetTilesFromNode(startNode);
-        var goalNode = new Node
-        {
-            Tiles = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 0 }
-        };
-        StartCoroutine(Algorithms.RTAStar.PathFinder.Execute(startNode, goalNode, 5, ErrorText,
-            SetFinalResult, SetTilesFromNode));
-
     }
 
     private Node GetNodeFromTiles()
@@ -97,7 +137,7 @@ public class TileManager : MonoBehaviour
         return startNode;
     }
 
-    private void SetTilesFromNode(Node node)
+    public void SetTilesFromNode(Node node)
     {
         for (int i = 0; i < node.Tiles.Length; i++)
         {

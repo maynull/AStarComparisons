@@ -11,33 +11,37 @@ namespace Algorithms.RTAStar
     {
         public static int Cycles;
         public static System.Random R = new System.Random();
+        public static List<Node> StoredNodes = new List<Node>();
 
-        static float CalculateSuccessorInDepth(int depth, Node goalNode, Node curNode, List<Node> storedNodes, float costFactor )
+        static float CalculateSuccessorInDepth(int depth, Node goalNode, Node curNode, float costFactor )
         {
             if (depth > 1)
             {
                 List<float> finalCost = new List<float>();
                 foreach (var successor in TileManager.Instance.GenerateSuccessors(curNode))
                 {
-                    var cost = CalculateSuccessorInDepth(depth - 1, goalNode, successor, storedNodes, 1 + costFactor);
+                    var cost = CalculateSuccessorInDepth(depth - 1, goalNode, successor, 1 + costFactor);
                     finalCost.Add(cost);
                 }
                 return finalCost.Min();
             }
 
-            curNode.H = HValueCalculator.Calculate(goalNode, curNode, storedNodes);
+            curNode.H = HValueCalculator.Calculate(goalNode, curNode, StoredNodes);
             return costFactor + curNode.H;
         }
-        public static IEnumerator Execute(Node startNode, Node goalNode, int depth, Text statusText,
-            Action<Node> callback, Action<Node> animateCallback = null)
+        public IEnumerator Execute(Node startNode, Node goalNode, int depth,
+            Action<Node> callback, Action<Node> animateCallback = null, Action<string> statusCallback = null )
         {
             Cycles = 0;
-            var storedNodes = new List<Node> {startNode};
+            if(!StoredNodes.Contains(startNode))
+                StoredNodes.Add(startNode);
+            //StoredNodes = new List<Node> {startNode};
             Node currentNode = startNode;
             while (true)
             {
                 Cycles++;
-                statusText.text = "Solving " + Cycles;
+                if(statusCallback != null)
+                    statusCallback("Solving " + Cycles);
                 List<Node> successorNodes = TileManager.Instance.GenerateSuccessors(currentNode);
                 Node optimalNode = successorNodes[0];
                 float minCost = float.MaxValue;
@@ -49,7 +53,7 @@ namespace Algorithms.RTAStar
                         callback(successorNode);
                         yield break;
                     }
-                    successorNode.F =CalculateSuccessorInDepth(depth, goalNode, successorNode, storedNodes, 1);
+                    successorNode.F =CalculateSuccessorInDepth(depth, goalNode, successorNode, 1);
                     if (successorNode.F <= minCost)
                     {
                         secondMinCost = minCost;
@@ -61,22 +65,21 @@ namespace Algorithms.RTAStar
                         secondMinCost = successorNode.F;
                     }
                 }
-                if (storedNodes.Any(x => x.HasEqualState(currentNode)))
+                if (StoredNodes.Any(x => x.HasEqualState(currentNode)))
                 {
-                    var node = storedNodes.Find(x => x.HasEqualState(currentNode));
+                    var node = StoredNodes.Find(x => x.HasEqualState(currentNode));
                     if (node.H < secondMinCost)
-                        storedNodes.Find(x => x.HasEqualState(currentNode)).H = secondMinCost;
+                        StoredNodes.Find(x => x.HasEqualState(currentNode)).H = secondMinCost;
                 }
                 else
                 {
-                    currentNode.H = secondMinCost;
-                    storedNodes.Add(currentNode);
+                    currentNode.H = minCost;
+                    StoredNodes.Add(currentNode);
                 }
                 currentNode = optimalNode;
                 if (animateCallback != null)
                     animateCallback(currentNode);
                 yield return null;
-                //yield return new WaitForSeconds(0.5f);
             }
         }
 
