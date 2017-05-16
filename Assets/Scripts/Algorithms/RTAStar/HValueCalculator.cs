@@ -1,15 +1,21 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
-namespace Algorithms.AStar
+namespace Algorithms.RTAStar
 {
     public static class HValueCalculator
     {
         private const float CostFactor = 1.0f;
 
-        public static float Calculate(Node goalNode, Node curNode)
+        public static float Calculate(Node goalNode, Node curNode, List<Node> storedNodes )
         {
+            if (storedNodes.Any(x => x.HasEqualState(curNode)))
+            {
+                return storedNodes.Find(x => x.HasEqualState(curNode)).H;
+            }
+                
             float result = 0.0f;
             for (int i = 0; i < 9; i++)
             {

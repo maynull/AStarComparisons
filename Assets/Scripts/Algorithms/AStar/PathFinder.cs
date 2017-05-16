@@ -2,13 +2,15 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Collections;
+using System.Diagnostics;
 using UnityEngine.UI;
+using UnityEngine;
 namespace Algorithms.AStar
 {
     public static class PathFinder
     {
         public static int Cycles { get; set; }
-        public static IEnumerator Execute(Node startNode, Node goalNode, Text errorText, Action<Node> callback)
+        public static IEnumerator Execute(Node startNode, Node goalNode, Text statusText, Action<Node> callback)
         {
             Cycles = 0;
 
@@ -18,7 +20,7 @@ namespace Algorithms.AStar
             while (openList.Count > 0)
             {
                 Cycles++;
-                errorText.text = "Solving " + Cycles;
+                statusText.text = "Solving " + Cycles;
                 Node currentNode = GetBestNodeFromOpenList(openList);
 
                 openList.Remove(currentNode);
@@ -38,7 +40,6 @@ namespace Algorithms.AStar
                     successorNode.G = GValueCalculator.Calculate(currentNode);
                     successorNode.H = HValueCalculator.Calculate(goalNode, successorNode);
                     successorNode.F = successorNode.G + successorNode.H;
-
                     if (AnyListHasBetterNode(successorNode, openList, closedList))
                         continue;
 

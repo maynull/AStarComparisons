@@ -31,6 +31,11 @@ public class Node
         return node != null && Tiles.SequenceEqual(node.Tiles);
     }
 
+    public bool HasEqualEmptyTileIndex(Node node)
+    {
+        return node != null && node.EmptyTileIndex == EmptyTileIndex;
+    }
+
     private static int GetEmptyTilePosition(Node node)
     {
         int emptyTilePos = -1;

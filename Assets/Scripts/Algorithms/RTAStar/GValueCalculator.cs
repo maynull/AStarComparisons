@@ -2,12 +2,12 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Algorithms.AStar
+namespace Algorithms.RTAStar
 {
     public static class GValueCalculator
     {
 
-        public const float CostFactor = 0.265f;
+        public const float CostFactor = 0;
 
         public static float Calculate(Node node)
         {

@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Algorithms.AStar;
 using UnityEngine;
 using UnityEngine.UI;
+
 public class TileManager : MonoBehaviour
 {
     public static TileManager Instance { get; private set; }
@@ -35,7 +35,7 @@ public class TileManager : MonoBehaviour
         }
     }
 
-    public void SolvePuzzle()
+    public void SolvePuzzleWithAStar()
     {
         ShuffleButton.interactable = false;
         SolveButton.interactable = false;
@@ -46,21 +46,40 @@ public class TileManager : MonoBehaviour
         {
             Tiles = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 0 }
         };
-        StartCoroutine(PathFinder.Execute(startNode, goalNode, ErrorText, result =>
+        StartCoroutine(Algorithms.AStar.PathFinder.Execute(startNode, goalNode, ErrorText, SetFinalResult));
+
+    }
+
+    private void SetFinalResult(Node result)
+    {
+        ShuffleButton.interactable = true;
+        SolveButton.interactable = true;
+        if (result == null)
         {
-            ShuffleButton.interactable = true;
-            SolveButton.interactable = true;
-            if (result == null)
-            {
-                ErrorText.gameObject.SetActive(true);
-                ErrorText.text = "No Solution";
-            }
-            else
-            {
-                ErrorText.gameObject.SetActive(false);
-                SetTilesFromNode(result);
-            }
-        }));
+            ErrorText.gameObject.SetActive(true);
+            ErrorText.text = "No Solution";
+        }
+        else
+        {
+            //ErrorText.gameObject.SetActive(false);
+            SetTilesFromNode(result);
+            ErrorText.text = "Finished " + ErrorText.text;
+        }
+    }
+
+    public void SolvePuzzleWithRtaStar()
+    {
+        ShuffleButton.interactable = false;
+        SolveButton.interactable = false;
+        ErrorText.gameObject.SetActive(true);
+        var startNode = GetNodeFromTiles();
+        SetTilesFromNode(startNode);
+        var goalNode = new Node
+        {
+            Tiles = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 0 }
+        };
+        StartCoroutine(Algorithms.RTAStar.PathFinder.Execute(startNode, goalNode, 5, ErrorText,
+            SetFinalResult, SetTilesFromNode));
 
     }
 
