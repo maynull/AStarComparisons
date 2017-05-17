@@ -10,8 +10,10 @@ namespace Algorithms.AStar
     public static class PathFinder
     {
         public static int Cycles { get; set; }
-        public static IEnumerator Execute(Node startNode, Node goalNode, Text statusText, Action<Node> callback)
+        public static float TotalTime;
+        public static IEnumerator Execute(Node startNode, Node goalNode, Text statusText, Action<Node, int> callback)
         {
+            TotalTime = Time.time;
             Cycles = 0;
 
             var openList = new List<Node> { startNode };
@@ -33,23 +35,23 @@ namespace Algorithms.AStar
                 {
                     if (successorNode.HasEqualState(goalNode))
                     {
-                        callback(successorNode);
+                        TotalTime = Time.time - TotalTime;
+                        callback(successorNode, Cycles);
                         yield break;
                     }
 
                     successorNode.G = GValueCalculator.Calculate(currentNode);
                     successorNode.H = HValueCalculator.Calculate(goalNode, successorNode);
                     successorNode.F = successorNode.G + successorNode.H;
-                    if (AnyListHasBetterNode(successorNode, openList, closedList))
+                    if (AnyListHasBetterNode(successorNode, openList))
                         continue;
 
                     openList.Add(successorNode);
                 }
-                
                 yield return null;
             }
-
-            callback(null);
+            TotalTime = Time.time - TotalTime;
+            callback(null, Cycles);
         }
 
         private static Node GetBestNodeFromOpenList(IEnumerable<Node> openList)
@@ -57,13 +59,11 @@ namespace Algorithms.AStar
             return openList.OrderBy(n => n.F).First();
         }
 
-        private static bool AnyListHasBetterNode(Node successor, List<Node> openList, List<Node> closedList)
+        private static bool AnyListHasBetterNode(Node successor, List<Node> openList)
         {
             var openListHasBetter = openList.FirstOrDefault(n => n.G.Equals(successor.G)
                                                                   && n.F < successor.F) != null;
-            //var closedListHasBetter = closedList.FirstOrDefault(n => n.G.Equals(successor.G)
-            //                                                          && n.F < successor.F) != null;
-            return openListHasBetter;// || closedListHasBetter;
+            return openListHasBetter;
         }
 
     }
