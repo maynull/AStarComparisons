@@ -23,7 +23,7 @@ public class TileManager : MonoBehaviour
     public  Algorithm ChosenAlgorithm;
     private int[] _premadePuzzleStart;
     public InputField DepthBox;
-    private int _depth = 4;
+    private int _depth = 5;
     void Awake()
     {
         Instance = this;
@@ -190,12 +190,12 @@ public class TileManager : MonoBehaviour
                 case Algorithm.AStar:
                     totalTime = TimeSpan.FromSeconds(Algorithms.AStar.PathFinder.TotalTime);
                     StatusText.text = "Finished Solving in " + cycles + "\ncycles " + GetStep(result) + " steps and " +
-                                      string.Format("{0:D2}", totalTime.Seconds) + " sec.";
+                                      string.Format("{0}", totalTime.Seconds) + " sec.";
                     break;
                 case Algorithm.RTAStar:
                     totalTime = TimeSpan.FromSeconds(Algorithms.RTAStar.PathFinder.TotalTime);
                     StatusText.text = "Finished Solving in " + cycles + " cycles and " +
-                                      string.Format("{0:D2}", totalTime.Seconds) + " sec.";
+                                      string.Format("{0}", totalTime.Seconds) + " sec.";
                     break;
                 case Algorithm.MARTAStar:
                     MartaStatusTexts.ToList().ForEach(x => x.gameObject.SetActive(true));
@@ -203,7 +203,7 @@ public class TileManager : MonoBehaviour
                     var finishedIndex = MartaStatusTexts.ToList()
                         .FindIndex(x => int.Parse(Regex.Match(x.text, @"(\d+)(?!.*\d)").Value) == cycles);
                     MartaStatusTexts[finishedIndex].text = "Agent " + finishedIndex + " solved in " + cycles +
-                                                           " cycles and " + string.Format("{0:D2}", totalTime.Seconds) +
+                                                           " cycles and " + string.Format("{0}", totalTime.Seconds) +
                                                            " sec.";
                     break;
             }
