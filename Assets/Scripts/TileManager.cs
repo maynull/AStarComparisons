@@ -189,7 +189,7 @@ public class TileManager : MonoBehaviour
             {
                 case Algorithm.AStar:
                     totalTime = TimeSpan.FromSeconds(Algorithms.AStar.PathFinder.TotalTime);
-                    StatusText.text = "Finished Solving in " + cycles + " cycles and " +
+                    StatusText.text = "Finished Solving in " + cycles + "\ncycles " + GetStep(result) + " steps and " +
                                       string.Format("{0:D2}", totalTime.Seconds) + " sec.";
                     break;
                 case Algorithm.RTAStar:
@@ -208,6 +208,16 @@ public class TileManager : MonoBehaviour
                     break;
             }
         }
+    }
+
+    public int GetStep(Node resultNode)
+    {
+        var stack = new Stack<Node>();
+        do
+        {
+            stack.Push(resultNode);
+        } while ((resultNode = resultNode.Parent) != null);
+        return stack.Count;
     }
 
     private Node GetNodeFromTiles()
